@@ -30,6 +30,42 @@ namespace ScoreRank.Controllers
         [HttpGet]
         public ActionResult<ApiResponse<List<CustomerRank>>> GetCustomersByRank(int? start, int? end)
         {
+            var errors = new List<string>();
+
+            if (start == null || end == null)
+            {
+                errors.Add("Both start and end rank parameters are required.");
+            }
+
+            // Validate start parameter
+            if (start.HasValue && start.Value < 1)
+            {
+                errors.Add("Start rank must be a positive integer.");
+            }
+
+            // Validate end parameter
+            if (end.HasValue && end.Value < 1)
+            {
+                errors.Add("End rank must be a positive integer.");
+            }
+
+            // Validate order when both parameters are provided
+            if (start.HasValue && end.HasValue && start.Value > end.Value)
+            {
+                errors.Add("Start rank cannot be greater than end rank.");
+            }
+
+            // Return validation errors if any
+            if (errors.Any())
+            {
+                return BadRequest(new ApiResponse<List<CustomerRank>>
+                {
+                    Success = false,
+                    Message = "Invalid parameters.",
+                    Errors = errors
+                });
+            }
+
             // Implementation not required for this task
             return Ok(new ApiResponse<List<CustomerRank>>
             {

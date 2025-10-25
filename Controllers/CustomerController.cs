@@ -31,6 +31,31 @@ namespace ScoreRank.Controllers
         [HttpPost("{customerId}/score/{score}")]
         public ActionResult<ApiResponse<decimal>> UpdateScore(long customerId, decimal score)
         {
+            var errors = new List<string>();
+
+            // Validate customerId parameter
+            if (customerId <= 0)
+            {
+                errors.Add("Customer ID must be a positive integer.");
+            }
+
+            // Validate score parameter
+            if (score < -1000m || score > 1000m)
+            {
+                errors.Add("Score must be between -1000 and 1000.");
+            }
+
+            // Return validation errors if any
+            if (errors.Any())
+            {
+                return BadRequest(new ApiResponse<decimal>
+                {
+                    Success = false,
+                    Message = "Invalid parameters.",
+                    Errors = errors
+                });
+            }
+
             // Implementation not required for this task
             return Ok(new ApiResponse<decimal>
             {

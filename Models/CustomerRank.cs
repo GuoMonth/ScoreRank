@@ -23,6 +23,6 @@ namespace ScoreRank.Models
         /// The rank position of the customer in the leaderboard.
         /// </summary>
         [JsonPropertyName("rank")]
-        public int Rank { get; set; }
+        public long Rank { get; set; }
     }
 }

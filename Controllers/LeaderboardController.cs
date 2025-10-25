@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ScoreRank.Models;
 
 namespace ScoreRank.Controllers
 {
@@ -20,5 +21,22 @@ namespace ScoreRank.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Gets customers by their rank range.
+        /// </summary>
+        /// <param name="start">The starting rank position (inclusive, if exists).</param>
+        /// <param name="end">The ending rank position (inclusive, if exists).</param>
+        /// <returns>An ApiResponse containing the list of customers with their rank and score information.</returns>
+        [HttpGet]
+        public ActionResult<ApiResponse<List<CustomerRank>>> GetCustomersByRank(int? start, int? end)
+        {
+            // Implementation not required for this task
+            return Ok(new ApiResponse<List<CustomerRank>>
+            {
+                Success = true,
+                Data = new List<CustomerRank>(),
+                Message = "Customers retrieved successfully"
+            });
+        }
     }
 }

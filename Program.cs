@@ -21,7 +21,7 @@ namespace ScoreRank
             RegisterServices(builder.Services);
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            // Swagger/OpenAPI at http://localhost:5235/swagger/index.html
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

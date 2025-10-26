@@ -58,6 +58,7 @@ namespace ScoreRank.Controllers
             // Return validation errors if any
             if (errors.Any())
             {
+                _logger.LogWarning("GetCustomersByRank validation errors: {Errors}", string.Join(", ", errors));
                 return BadRequest(new ApiResponse<List<CustomerRank>>
                 {
                     Success = false,
@@ -108,6 +109,7 @@ namespace ScoreRank.Controllers
             // Return validation errors if any
             if (errors.Any())
             {
+                _logger.LogWarning("customerId: {customerId}, Validation errors: {Errors}", customerId, string.Join(", ", errors));
                 return BadRequest(new ApiResponse<List<CustomerRank>>
                 {
                     Success = false,

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ScoreRank.Models;
+using ScoreRank.Services;
 
 namespace ScoreRank.Controllers
 {
@@ -10,16 +11,18 @@ namespace ScoreRank.Controllers
     [Route("api/customer")]
     public class CustomerController : ControllerBase
     {
+        private readonly CustomerService _customerService;
         private readonly ILogger<CustomerController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CustomerController"/> class.
         /// </summary>
-        /// <param name="logger">The logger instance.</param>
-        public CustomerController(ILogger<CustomerController> logger)
+        public CustomerController(CustomerService customerService, ILogger<CustomerController> logger)
         {
+            _customerService = customerService;
             _logger = logger;
         }
+
 
         /// <summary>
         /// Updates the score for a customer.
@@ -30,7 +33,7 @@ namespace ScoreRank.Controllers
         /// <param name="score">The score adjustment (decimal in range [-1000, +1000]). Positive increases, negative decreases.</param>
         /// <returns>An ApiResponse containing the current score after update.</returns>
         [HttpPost("{customerId}/score/{score}")]
-        public ActionResult<ApiResponse<decimal>> UpdateScore(long customerId, decimal score)
+        public ActionResult<ApiResponse<object>> UpdateScore(long customerId, decimal score)
         {
             var errors = new List<string>();
 
@@ -50,7 +53,7 @@ namespace ScoreRank.Controllers
             if (errors.Any())
             {
                 _logger.LogWarning("customerId: {customerId}, Validation errors: {Errors}", customerId, string.Join(", ", errors));
-                return BadRequest(new ApiResponse<decimal>
+                return BadRequest(new ApiResponse<object>
                 {
                     Success = false,
                     Message = "Invalid parameters.",
@@ -58,12 +61,13 @@ namespace ScoreRank.Controllers
                 });
             }
 
+            _customerService.AddOrUpdateCustomerScore(customerId, score);
+
             // Implementation not required for this task
-            return Ok(new ApiResponse<decimal>
+            return Ok(new ApiResponse<object>
             {
                 Success = true,
-                Data = 0m,
-                Message = "Score updated successfully"
+                Message = $"Customer {customerId} score updated successfully"
             });
         }
     }

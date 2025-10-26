@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ScoreRank.Models;
+using ScoreRank.Services;
 
 namespace ScoreRank.Controllers
 {
@@ -10,14 +11,15 @@ namespace ScoreRank.Controllers
     [Route("api/leaderboard")]
     public class LeaderboardController : ControllerBase
     {
+        private readonly LeaderboardService _leaderboardService;
         private readonly ILogger<LeaderboardController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LeaderboardController"/> class.
         /// </summary>
-        /// <param name="logger">The logger instance.</param>
-        public LeaderboardController(ILogger<LeaderboardController> logger)
+        public LeaderboardController(LeaderboardService leaderboardService, ILogger<LeaderboardController> logger)
         {
+            _leaderboardService = leaderboardService;
             _logger = logger;
         }
 
@@ -28,29 +30,24 @@ namespace ScoreRank.Controllers
         /// <param name="end">The ending rank position (inclusive, if exists).</param>
         /// <returns>An ApiResponse containing the list of customers with their rank and score information. The list will not be sorted.</returns>
         [HttpGet]
-        public ActionResult<ApiResponse<List<CustomerRank>>> GetCustomersByRank(int? start, int? end)
+        public ActionResult<ApiResponse<List<CustomerRank>>> GetCustomersByRank(int start, int end)
         {
             var errors = new List<string>();
 
-            if (start == null || end == null)
-            {
-                errors.Add("Both start and end rank parameters are required.");
-            }
-
             // Validate start parameter
-            if (start.HasValue && start.Value < 1)
+            if (start < 1)
             {
                 errors.Add("Start rank must be a positive integer.");
             }
 
             // Validate end parameter
-            if (end.HasValue && end.Value < 1)
+            if (end < 1)
             {
                 errors.Add("End rank must be a positive integer.");
             }
 
             // Validate order when both parameters are provided
-            if (start.HasValue && end.HasValue && start.Value > end.Value)
+            if (start > end)
             {
                 errors.Add("Start rank cannot be greater than end rank.");
             }
@@ -67,11 +64,11 @@ namespace ScoreRank.Controllers
                 });
             }
 
-            // Implementation not required for this task
+            var customers = _leaderboardService.GetCustomersByRankRange(start, end);
             return Ok(new ApiResponse<List<CustomerRank>>
             {
                 Success = true,
-                Data = new List<CustomerRank>(),
+                Data = customers.ToList(),
                 Message = "Customers retrieved successfully"
             });
         }
@@ -118,12 +115,13 @@ namespace ScoreRank.Controllers
                 });
             }
 
+            var customers = _leaderboardService.GetWithNeighbors(customerId, high ?? 0, low ?? 0);
 
             // Implementation not required for this task
             return Ok(new ApiResponse<List<CustomerRank>>
             {
                 Success = true,
-                Data = new List<CustomerRank>(),
+                Data = customers.ToList(),
                 Message = "Customer and neighbors retrieved successfully"
             });
         }

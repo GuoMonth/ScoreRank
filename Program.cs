@@ -1,4 +1,5 @@
 
+using ScoreRank.Data;
 using ScoreRank.Services;
 
 namespace ScoreRank
@@ -49,6 +50,7 @@ namespace ScoreRank
         /// <param name="services"></param>
         public static void RegisterServices(IServiceCollection services)
         {
+            services.AddSingleton<DataFactory>();
             services.AddScoped<LeaderboardService>();
             services.AddScoped<CustomerService>();
         }

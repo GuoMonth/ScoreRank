@@ -1,3 +1,4 @@
+using ScoreRank.Data;
 using ScoreRank.Models;
 
 namespace ScoreRank.Services
@@ -12,13 +13,15 @@ namespace ScoreRank.Services
         /// </summary>
         private readonly Leaderboard _leaderboard;
 
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LeaderboardService"/> class.
         /// </summary>
-        public LeaderboardService()
+        public LeaderboardService(DataFactory dataFactory)
         {
-            _leaderboard = new Leaderboard();
+            _leaderboard = dataFactory.GetLeaderboard();
         }
+
 
         /// <summary>
         /// Gets the rank of a customer by their ID.
@@ -31,13 +34,25 @@ namespace ScoreRank.Services
         }
 
         /// <summary>
-        /// Adds or updates a customer's score and updates ranks accordingly.
+        /// Gets customers by their rank range.
         /// </summary>
-        /// <param name="customerId"></param>
-        /// <param name="scoreDelta"></param>
-        public void AddOrUpdateCustomerScore(long customerId, decimal scoreDelta)
+        /// <param name="start">Begin at 1. The starting rank position (inclusive, if exists).</param>
+        /// <param name="end">Begin at 1. The ending rank position (inclusive, if exists).</param>
+        /// <returns></returns>
+        public IEnumerable<CustomerRank> GetCustomersByRankRange(int start, int end)
         {
-            _leaderboard.AddOrUpdateCustomer(customerId, scoreDelta);
+            return _leaderboard.GetByRankRange(start, end);
+        }
+
+        /// <summary>
+        /// Gets neighboring customers around a specific customer.
+        /// </summary>
+        /// <param name="customerId">The customer ID.</param>
+        /// <param name="high">The number of higher-ranked neighbors to include. begins at 1.</param>
+        /// <param name="low">The number of lower-ranked neighbors to include. begins at 1.</param>
+        public IEnumerable<CustomerRank> GetWithNeighbors(long customerId, int high, int low)
+        {
+            return _leaderboard.GetWithNeighbors(customerId, high, low);
         }
     }
 }

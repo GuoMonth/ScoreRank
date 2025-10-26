@@ -60,6 +60,7 @@ namespace ScoreRank.Models
         {
             if (_customerDict.TryGetValue(customerId, out var customerRank))
             {
+                // slow but simple way to get rank. need to optimize if performance issue found
                 return _sortedScore.ToList().IndexOf(customerRank) + 1; // Rank starts at 1
             }
             return -1; // Customer not found

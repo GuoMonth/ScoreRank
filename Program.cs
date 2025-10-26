@@ -1,4 +1,6 @@
 
+using ScoreRank.Services;
+
 namespace ScoreRank
 {
     /// <summary>
@@ -15,6 +17,7 @@ namespace ScoreRank
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            RegisterServices(builder.Services);
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -38,6 +41,16 @@ namespace ScoreRank
             app.MapControllers();
 
             app.Run();
+        }
+
+        /// <summary>
+        /// Registers application services.
+        /// </summary>
+        /// <param name="services"></param>
+        public static void RegisterServices(IServiceCollection services)
+        {
+            services.AddScoped<LeaderboardService>();
+            services.AddScoped<CustomerService>();
         }
     }
 }

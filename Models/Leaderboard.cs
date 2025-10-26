@@ -56,7 +56,12 @@ namespace ScoreRank.Models
                 _customerDict[customerId] = customerRank;
             }
 
-            _sortedRanks.Add(customerRank);
+            var addResult = _sortedRanks.Add(customerRank);
+
+            if (!addResult)
+            {
+                throw new InvalidOperationException($"Failed to add or update customer rank in the leaderboard. customerId: {customerId}");
+            }
         }
 
         /// <summary>

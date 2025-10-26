@@ -64,7 +64,10 @@ namespace ScoreRank.Models
 
 
         /// <summary>
-        /// 获取指定客户的排名
+        /// 获取指定客户的排名, 排名实时计算
+        /// 计算逻辑: 从跳表头节点开始, 按层级从高到低遍历,
+        /// 遇到分数更高的节点则前进, 相同分数则比较客户ID以确保稳定排序,
+        /// 累计跨度值以计算排名, 直到找到目标客户节点为止.
         /// </summary>
         /// <param name="customerId">客户ID</param>
         public int GetRank(long customerId)

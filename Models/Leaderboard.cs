@@ -1,6 +1,33 @@
 namespace ScoreRank.Models
 {
     /// <summary>
+    /// Custom comparer to sort by Score descending, then by CustomerId ascending.
+    /// </summary>
+    public class Comparer : IComparer<CustomerScore>
+    {
+        /// <summary>
+        /// Compares two CustomerScore objects.
+        /// </summary>
+        /// <param name="x">The first CustomerScore object to compare.</param>
+        /// <param name="y">The second CustomerScore object to compare.</param>
+        /// <returns>A negative integer, zero, or a positive integer as the first argument is less than, equal to, or greater than the second.</returns>
+        public int Compare(CustomerScore? x, CustomerScore? y)
+        {
+            // Compare by Score descending
+            int result = y?.Score.CompareTo(x?.Score) ?? 0;
+            if (result != 0)
+            {
+                return result;
+            }
+            else
+            {
+                // If Scores are equal, compare by CustomerId ascending
+                return x?.CustomerId.CompareTo(y?.CustomerId) ?? 0;
+            }
+        }
+    }
+
+    /// <summary>
     /// Represents the leaderboard containing customer rankings.
     /// </summary>
     public class Leaderboard
@@ -11,17 +38,17 @@ namespace ScoreRank.Models
         /// </summary>
         private readonly int MaxDataSize = 1000000;
 
-        private SortedSet<CustomerRank> _sortedRanks;
+        private SortedSet<CustomerScore> _sortedScore;
 
-        private Dictionary<long, CustomerRank> _customerDict;
+        private Dictionary<long, CustomerScore> _customerDict;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Leaderboard"/> class.
         /// </summary>
         public Leaderboard()
         {
-            _sortedRanks = new SortedSet<CustomerRank>(new Comparer());
-            _customerDict = new Dictionary<long, CustomerRank>();
+            _sortedScore = new SortedSet<CustomerScore>(new Comparer());
+            _customerDict = new Dictionary<long, CustomerScore>();
         }
 
         /// <summary>
@@ -33,7 +60,7 @@ namespace ScoreRank.Models
         {
             if (_customerDict.TryGetValue(customerId, out var customerRank))
             {
-                return _sortedRanks.ToList().IndexOf(customerRank) + 1; // Rank starts at 1
+                return _sortedScore.ToList().IndexOf(customerRank) + 1; // Rank starts at 1
             }
             return -1; // Customer not found
         }
@@ -45,11 +72,11 @@ namespace ScoreRank.Models
         /// <param name="scoreDelta">The score adjustment.</param>
         public void AddOrUpdateCustomer(long customerId, decimal scoreDelta)
         {
-            if (_customerDict.TryGetValue(customerId, out var customerRank))
+            if (_customerDict.TryGetValue(customerId, out var customerScore))
             {
                 // Update existing customer
-                _sortedRanks.Remove(customerRank);
-                customerRank.Score += scoreDelta;
+                _sortedScore.Remove(customerScore);
+                customerScore.Score += scoreDelta;
             }
             else
             {
@@ -60,15 +87,15 @@ namespace ScoreRank.Models
                 }
 
                 // Add new customer
-                customerRank = new CustomerRank
+                customerScore = new CustomerScore
                 {
                     CustomerId = customerId,
                     Score = scoreDelta
                 };
-                _customerDict[customerId] = customerRank;
+                _customerDict[customerId] = customerScore;
             }
 
-            var addResult = _sortedRanks.Add(customerRank);
+            var addResult = _sortedScore.Add(customerScore);
 
             if (!addResult)
             {
@@ -83,16 +110,22 @@ namespace ScoreRank.Models
         /// <param name="endRank">The ending rank (inclusive). begins at 1.</param>
         public IEnumerable<CustomerRank> GetByRankRange(int startRank, int endRank)
         {
-            var res = _sortedRanks.Skip(startRank - 1).Take(endRank - startRank + 1);
+            var res = _sortedScore.Skip(startRank - 1).Take(endRank - startRank + 1);
 
             // calculate rank for each customer
             int rank = startRank;
+            // initialize result list with capacity
+            var result = new List<CustomerRank>(res.Count());
             foreach (var customer in res)
             {
-                customer.Rank = rank++;
+                result.Add(new CustomerRank
+                {
+                    customerScore = customer,
+                    Rank = rank++
+                });
             }
 
-            return res;
+            return result;
         }
 
         /// <summary>

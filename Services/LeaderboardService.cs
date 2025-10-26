@@ -1,4 +1,3 @@
-using ScoreRank.Data;
 using ScoreRank.Models;
 
 namespace ScoreRank.Services
@@ -17,9 +16,9 @@ namespace ScoreRank.Services
         /// <summary>
         /// Initializes a new instance of the <see cref="LeaderboardService"/> class.
         /// </summary>
-        public LeaderboardService(DataFactory dataFactory)
+        public LeaderboardService(Leaderboard leaderboard)
         {
-            _leaderboard = dataFactory.GetLeaderboard();
+            _leaderboard = leaderboard;
         }
 
 

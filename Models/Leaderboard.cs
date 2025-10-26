@@ -5,6 +5,12 @@ namespace ScoreRank.Models
     /// </summary>
     public class Leaderboard
     {
+        /// <summary>
+        /// Maximum allowed data size in memory.
+        /// Default is 1 million entries.
+        /// </summary>
+        private readonly int MaxDataSize = 1000000;
+
         private SortedSet<CustomerRank> _sortedRanks;
 
         private Dictionary<long, CustomerRank> _customerDict;
@@ -47,6 +53,12 @@ namespace ScoreRank.Models
             }
             else
             {
+                // For safety, check max data size
+                if (_customerDict.Count >= MaxDataSize)
+                {
+                    throw new InvalidOperationException("Leaderboard has reached its maximum data size. Cannot add new customer.");
+                }
+
                 // Add new customer
                 customerRank = new CustomerRank
                 {

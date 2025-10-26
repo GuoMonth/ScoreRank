@@ -20,7 +20,10 @@ namespace ScoreRank.Models
         public decimal Score { get; set; }
 
         /// <summary>
-        /// The rank position of the customer in the leaderboard.
+        /// The rank position of the customer in the leaderboard, depending on their score.
+        /// If two customers have the same score, lower customer ID gets the better rank.
+        /// Note: Rank starts at 1 for the highest score. Rank 2 is the second highest, and so on.
+        /// Note: Rank is always a positive integer. and never same rank for different customers.
         /// </summary>
         [JsonPropertyName("rank")]
         public long Rank { get; set; }

@@ -26,7 +26,7 @@ namespace ScoreRank.Controllers
         /// </summary>
         /// <param name="start">The starting rank position (inclusive, if exists).</param>
         /// <param name="end">The ending rank position (inclusive, if exists).</param>
-        /// <returns>An ApiResponse containing the list of customers with their rank and score information.</returns>
+        /// <returns>An ApiResponse containing the list of customers with their rank and score information. The list will not be sorted.</returns>
         [HttpGet]
         public ActionResult<ApiResponse<List<CustomerRank>>> GetCustomersByRank(int? start, int? end)
         {
@@ -81,7 +81,7 @@ namespace ScoreRank.Controllers
         /// <param name="customerId">The unique identifier of the customer to look up.</param>
         /// <param name="high">The number of higher-ranked neighbors to include (default: 0).</param>
         /// <param name="low">The number of lower-ranked neighbors to include (default: 0).</param>
-        /// <returns>An ApiResponse containing the customer and their neighbors with rank and score information.</returns>
+        /// <returns>An ApiResponse containing the customer and their neighbors with rank and score information. The list will not be sorted.</returns>
         [HttpGet("{customerId}")]
         public ActionResult<ApiResponse<List<CustomerRank>>> GetCustomerWithNeighbors(long customerId, int? high = 0, int? low = 0)
         {

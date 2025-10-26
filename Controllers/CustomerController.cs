@@ -24,6 +24,7 @@ namespace ScoreRank.Controllers
         /// <summary>
         /// Updates the score for a customer.
         /// Note, If the customer does not exist, they are created with initial score of 0 before applying the update.
+        /// If add new customer, or update existing customer score, the rank of all customers in leaderboard should be updated accordingly.
         /// </summary>
         /// <param name="customerId">The customer ID (positive int64).</param>
         /// <param name="score">The score adjustment (decimal in range [-1000, +1000]). Positive increases, negative decreases.</param>

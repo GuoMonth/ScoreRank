@@ -6,9 +6,9 @@ namespace ScoreRank.Models
     public class ScoreRankSkipList
     {
         /// <summary>
-        /// 跳表的最大层数, 32层足以支持百万级数据的高效操作
+        /// 跳表允许的最大层数, 32层足以支持百万级数据的高效操作
         /// </summary>
-        private const int MaxLevel = 32; // 最大层数
+        private const int MaxAllowedLevel = 32; // 最大层数
 
         /// <summary>
         /// 跳表的头节点
@@ -16,9 +16,9 @@ namespace ScoreRank.Models
         private readonly SkipListNode _head;
 
         /// <summary>
-        /// 当前跳表的最高层数
+        /// 当前跳表的实际最高层数
         /// </summary>
-        private int _currentLevel;
+        private int _currentMaxLevel;
 
         /// <summary>
         /// 随机数生成器
@@ -40,8 +40,8 @@ namespace ScoreRank.Models
         /// </summary>
         public ScoreRankSkipList()
         {
-            _head = new SkipListNode(MaxLevel, new CustomerRank { CustomerId = long.MinValue });
-            _currentLevel = 0;
+            _head = new SkipListNode(MaxAllowedLevel, new CustomerRank { CustomerId = long.MinValue });
+            _currentMaxLevel = 0;
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace ScoreRank.Models
             // (_rng.Next() & 3) == 0, 25%的概率增加一层.
             // 具体来说, 3的二进制是11, 因此 00, 01, 10 三种结果不会增加层数, 
             // 只有11会增加层数, 概率为1/4.
-            while (level < MaxLevel && (_rng.Next() & 3) == 0)
+            while (level < MaxAllowedLevel && (_rng.Next() & 3) == 0)
             {
                 level++;
             }
@@ -78,7 +78,7 @@ namespace ScoreRank.Models
             var currentNode = _head;
 
             // 计算排名
-            for (int level = _currentLevel; level >= 0; level--)
+            for (int level = _currentMaxLevel; level >= 0; level--)
             {
                 while (currentNode.Forward[level] != null &&
                        (currentNode.Forward[level].Data.Score > rankNode.Data.Score ||

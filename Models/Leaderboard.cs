@@ -71,7 +71,16 @@ namespace ScoreRank.Models
         /// <param name="endRank">The ending rank (inclusive). begins at 1.</param>
         public IEnumerable<CustomerRank> GetByRankRange(int startRank, int endRank)
         {
-            return _sortedRanks.Skip(startRank - 1).Take(endRank - startRank + 1);
+            var res = _sortedRanks.Skip(startRank - 1).Take(endRank - startRank + 1);
+
+            // calculate rank for each customer
+            int rank = startRank;
+            foreach (var customer in res)
+            {
+                customer.Rank = rank++;
+            }
+
+            return res;
         }
 
         /// <summary>

@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace ScoreRank.Models
 {
     /// <summary>
@@ -40,7 +42,7 @@ namespace ScoreRank.Models
 
         private SortedSet<CustomerScore> _sortedScore;
 
-        private Dictionary<long, CustomerScore> _customerDict;
+        private ConcurrentDictionary<long, CustomerScore> _customerDict;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Leaderboard"/> class.
@@ -48,7 +50,7 @@ namespace ScoreRank.Models
         public Leaderboard()
         {
             _sortedScore = new SortedSet<CustomerScore>(new Comparer());
-            _customerDict = new Dictionary<long, CustomerScore>();
+            _customerDict = new ConcurrentDictionary<long, CustomerScore>();
         }
 
         /// <summary>

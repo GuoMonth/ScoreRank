@@ -32,7 +32,7 @@ namespace ScoreRank.Models
     /// <summary>
     /// Represents the leaderboard containing customer rankings.
     /// </summary>
-    public class Leaderboard
+    public class Leaderboard : IDisposable
     {
         /// <summary>
         /// Maximum allowed data size in memory.
@@ -43,6 +43,12 @@ namespace ScoreRank.Models
         private SortedSet<CustomerScore> _sortedScore;
 
         private ConcurrentDictionary<long, CustomerScore> _customerDict;
+
+        /// <summary>
+        /// Writer lock for protecting concurrent write operations to the SortedSet.
+        /// Reads do not require locking due to atomic nature of operations.
+        /// </summary>
+        private readonly ReaderWriterLockSlim _writeLock = new ReaderWriterLockSlim();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Leaderboard"/> class.
@@ -75,34 +81,42 @@ namespace ScoreRank.Models
         /// <param name="scoreDelta">The score adjustment.</param>
         public void AddOrUpdateCustomer(long customerId, decimal scoreDelta)
         {
-            if (_customerDict.TryGetValue(customerId, out var customerScore))
+            _writeLock.EnterWriteLock();
+            try
             {
-                // Update existing customer
-                _sortedScore.Remove(customerScore);
-                customerScore.Score += scoreDelta;
-            }
-            else
-            {
-                // For safety, check max data size
-                if (_customerDict.Count >= MaxDataSize)
+                if (_customerDict.TryGetValue(customerId, out var customerScore))
                 {
-                    throw new InvalidOperationException("Leaderboard has reached its maximum data size. Cannot add new customer.");
+                    // Update existing customer
+                    _sortedScore.Remove(customerScore);
+                    customerScore.Score += scoreDelta;
+                }
+                else
+                {
+                    // For safety, check max data size
+                    if (_customerDict.Count >= MaxDataSize)
+                    {
+                        throw new InvalidOperationException("Leaderboard has reached its maximum data size. Cannot add new customer.");
+                    }
+
+                    // Add new customer
+                    customerScore = new CustomerScore
+                    {
+                        CustomerId = customerId,
+                        Score = scoreDelta
+                    };
+                    _customerDict[customerId] = customerScore;
                 }
 
-                // Add new customer
-                customerScore = new CustomerScore
+                var addResult = _sortedScore.Add(customerScore);
+
+                if (!addResult)
                 {
-                    CustomerId = customerId,
-                    Score = scoreDelta
-                };
-                _customerDict[customerId] = customerScore;
+                    throw new InvalidOperationException($"Failed to add or update customer rank in the leaderboard. customerId: {customerId}");
+                }
             }
-
-            var addResult = _sortedScore.Add(customerScore);
-
-            if (!addResult)
+            finally
             {
-                throw new InvalidOperationException($"Failed to add or update customer rank in the leaderboard. customerId: {customerId}");
+                _writeLock.ExitWriteLock();
             }
         }
 
@@ -150,6 +164,15 @@ namespace ScoreRank.Models
                 var endRank = currentRank + low;
                 return GetByRankRange(startRank, endRank);
             }
+        }
+
+        /// <summary>
+        /// Releases all resources used by the Leaderboard.
+        /// </summary>
+        public void Dispose()
+        {
+            _writeLock?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

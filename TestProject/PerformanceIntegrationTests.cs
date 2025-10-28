@@ -17,7 +17,7 @@ namespace TestProject
             var data = new List<(long, decimal)>();
             for (long i = 1; i <= LargeDataSize; i++)
             {
-                var score = (decimal)(Random.Next(-1000, 1000)); // -1000 to 999
+                var score = (decimal)Random.Next(-1000, 1000); // -1000 to 999
                 data.Add((i, score));
             }
             return data;

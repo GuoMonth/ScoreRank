@@ -48,7 +48,7 @@ namespace ScoreRank.Models
         /// Writer lock for protecting concurrent write operations to the SortedSet.
         /// Reads do not require locking due to atomic nature of operations.
         /// </summary>
-        private readonly ReaderWriterLockSlim _writeLock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim _rwLock = new ReaderWriterLockSlim();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Leaderboard"/> class.
@@ -66,12 +66,20 @@ namespace ScoreRank.Models
         /// <returns></returns>
         public int GetRankByCustomerId(long customerId)
         {
-            if (_customerDict.TryGetValue(customerId, out var customerRank))
+            _rwLock.EnterReadLock();
+            try
             {
-                // slow but simple way to get rank. need to optimize if performance issue found
-                return _sortedScore.ToList().IndexOf(customerRank) + 1; // Rank starts at 1
+                if (_customerDict.TryGetValue(customerId, out var customerScore))
+                {
+                    // slow but simple way to get rank. need to optimize if performance issue found
+                    return _sortedScore.ToList().IndexOf(customerScore) + 1; // Rank starts at 1
+                }
+                return -1; // Customer not found
             }
-            return -1; // Customer not found
+            finally
+            {
+                _rwLock.ExitReadLock();
+            }
         }
 
         /// <summary>
@@ -81,7 +89,7 @@ namespace ScoreRank.Models
         /// <param name="scoreDelta">The score adjustment.</param>
         public void AddOrUpdateCustomer(long customerId, decimal scoreDelta)
         {
-            _writeLock.EnterWriteLock();
+            _rwLock.EnterWriteLock();
             try
             {
                 if (_customerDict.TryGetValue(customerId, out var customerScore))
@@ -116,7 +124,7 @@ namespace ScoreRank.Models
             }
             finally
             {
-                _writeLock.ExitWriteLock();
+                _rwLock.ExitWriteLock();
             }
         }
 
@@ -127,12 +135,84 @@ namespace ScoreRank.Models
         /// <param name="endRank">The ending rank (inclusive). begins at 1.</param>
         public IEnumerable<CustomerRank> GetByRankRange(int startRank, int endRank)
         {
-            var res = _sortedScore.Skip(startRank - 1).Take(endRank - startRank + 1);
+            _rwLock.EnterReadLock();
+            try
+            {
+                var res = _sortedScore.Skip(startRank - 1).Take(endRank - startRank + 1).ToList();
 
-            // calculate rank for each customer
+                // calculate rank for each customer
+                int rank = startRank;
+                // initialize result list with capacity
+                var result = new List<CustomerRank>(res.Count);
+                foreach (var customer in res)
+                {
+                    result.Add(new CustomerRank
+                    {
+                        customerScore = customer,
+                        Rank = rank++
+                    });
+                }
+
+                return result;
+            }
+            finally
+            {
+                _rwLock.ExitReadLock();
+            }
+        }
+
+        /// <summary>
+        /// Gets neighboring customers around a specific customer.
+        /// </summary>
+        /// <param name="customerId">The customer ID.</param>
+        /// <param name="high">The number of higher-ranked neighbors to include. begins at 1.</param>
+        /// <param name="low">The number of lower-ranked neighbors to include. begins at 1.</param>
+        public IEnumerable<CustomerRank> GetWithNeighbors(long customerId, int high, int low)
+        {
+            _rwLock.EnterReadLock();
+            try
+            {
+                var currentRank = GetRankByCustomerIdInternal(customerId);
+                if (currentRank == -1)
+                {
+                    return [];
+                }
+                else
+                {
+                    var startRank = Math.Max(1, currentRank - high);
+                    var endRank = currentRank + low;
+                    return GetByRankRangeInternal(startRank, endRank);
+                }
+            }
+            finally
+            {
+                _rwLock.ExitReadLock();
+            }
+        }
+
+        /// <summary>
+        /// Internal helper method to get rank without acquiring read lock.
+        /// Only call this from methods that already hold the read lock.
+        /// </summary>
+        private int GetRankByCustomerIdInternal(long customerId)
+        {
+            if (_customerDict.TryGetValue(customerId, out var customerRank))
+            {
+                return _sortedScore.ToList().IndexOf(customerRank) + 1;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Internal helper method to get rank range without acquiring read lock.
+        /// Only call this from methods that already hold the read lock.
+        /// </summary>
+        private IEnumerable<CustomerRank> GetByRankRangeInternal(int startRank, int endRank)
+        {
+            var res = _sortedScore.Skip(startRank - 1).Take(endRank - startRank + 1).ToList();
+
             int rank = startRank;
-            // initialize result list with capacity
-            var result = new List<CustomerRank>(res.Count());
+            var result = new List<CustomerRank>(res.Count);
             foreach (var customer in res)
             {
                 result.Add(new CustomerRank
@@ -146,32 +226,11 @@ namespace ScoreRank.Models
         }
 
         /// <summary>
-        /// Gets neighboring customers around a specific customer.
-        /// </summary>
-        /// <param name="customerId">The customer ID.</param>
-        /// <param name="high">The number of higher-ranked neighbors to include. begins at 1.</param>
-        /// <param name="low">The number of lower-ranked neighbors to include. begins at 1.</param>
-        public IEnumerable<CustomerRank> GetWithNeighbors(long customerId, int high, int low)
-        {
-            var currentRank = GetRankByCustomerId(customerId);
-            if (currentRank == -1)
-            {
-                return [];
-            }
-            else
-            {
-                var startRank = Math.Max(1, currentRank - high);
-                var endRank = currentRank + low;
-                return GetByRankRange(startRank, endRank);
-            }
-        }
-
-        /// <summary>
         /// Releases all resources used by the Leaderboard.
         /// </summary>
         public void Dispose()
         {
-            _writeLock?.Dispose();
+            _rwLock?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

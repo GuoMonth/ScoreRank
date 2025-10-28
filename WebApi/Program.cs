@@ -33,8 +33,6 @@ namespace ScoreRank
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseAuthorization();
 
 

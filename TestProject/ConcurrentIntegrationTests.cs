@@ -13,7 +13,6 @@ namespace TestProject
         private const int WriteThreads = 5;
         private const int QueryThreads = 2;
         private const int DataPerThread = 200000; // 20万 per thread
-        private const int TotalData = 1000000; // 100万 total
         private const int MaxQueryTime = 500; // ms
         private const int QueryDuration = 30000; // 30 seconds
         private static readonly Random Random = new Random(42);
